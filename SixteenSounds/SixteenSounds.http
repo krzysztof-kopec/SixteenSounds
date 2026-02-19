@@ -1,0 +1,6 @@
+@SixteenSounds_HostAddress = http://localhost:5159
+
+GET {{SixteenSounds_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
