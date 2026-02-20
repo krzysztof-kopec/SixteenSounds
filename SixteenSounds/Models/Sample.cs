@@ -1,27 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace SixteenSounds.Models
+﻿public class Sample
 {
-    public class Sample
-    {
-        [Key]
-        public int Id { get; set; }
+       public int Id { get; set; } // Unikalny identyfikator dla każdego sampla
+    public string Name { get; set; } = string.Empty; // Nazwa sampla
+    public string Category { get; set; } = string.Empty; // Kategoria, np. "Drums", "Bass", "Synth"
 
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty; // Nazwa pliku, np. "kick.wav"
 
-        public string Description { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Data dodania sampla
 
-        [Required]
-        public string FilePath { get; set; } = string.Empty; // Ścieżka do pliku na dysku/serwerze
-
-        public string Category { get; set; } = string.Empty; // Np. "Drums", "Synth", "Vocal"
-
-        public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
-
-        // Relacja: jeden sampel należy do jednego użytkownika
-        public int UserId { get; set; }
-        public User? User { get; set; }
-    }
+    public int UserId { get; set; }
 }
