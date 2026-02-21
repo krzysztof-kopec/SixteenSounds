@@ -1,12 +1,18 @@
-﻿public class Sample
+﻿using System.ComponentModel.DataAnnotations.Schema; // Ważne: dodaj to na samej górze!
+
+namespace SixteenSounds.Models
 {
-       public int Id { get; set; } // Unikalny identyfikator dla każdego sampla
-    public string Name { get; set; } = string.Empty; // Nazwa sampla
-    public string Category { get; set; } = string.Empty; // Kategoria, np. "Drums", "Bass", "Synth"
+    public class Sample
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
+        public int UserId { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-    public string FileName { get; set; } = string.Empty; // Nazwa pliku, np. "kick.wav"
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Data dodania sampla
-
-    public int UserId { get; set; }
+        // TEGO CI BRAKOWAŁO:
+        [NotMapped] // To mówi bazie danych: "Nie twórz dla mnie kolumny, potrzebuję tego pola tylko w kodzie"
+        public string FileUrl { get; set; } = string.Empty;
+    }
 }
