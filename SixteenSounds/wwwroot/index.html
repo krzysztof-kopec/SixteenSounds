@@ -1,0 +1,239 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>SixteenSounds - Twoje Sample</title>
+    <style>
+        @font-face {
+            font-family: "Satoshi";
+            src: url("./assets/fonts/Satoshi-Black.woff2") format("woff2"); /* Sprawdź ścieżkę! */
+            font-weight: 400;
+        }
+
+        .header-logo {
+
+            width: 800px;
+            margin-bottom: 20px;
+            clip-path: inset(40% 0% 40% 0%);
+
+        }
+
+        .background-container {
+            width: 100%;
+            height: 200px; /* Zwiększyłem nieco dla lepszego efektu */
+            overflow: hidden;
+            position: relative;
+        }
+
+        .background-video {
+            position: fixed; /* Wideo "pływa" za treścią */
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1; /* Wysyła wideo na sam spód */
+            object-fit: cover;
+            opacity: 0.4; /* Lekkie przyciemnienie, żeby napisy były czytelne */
+        }
+
+        /* Styl dla kontenera, jeśli chcesz, żeby wideo było tylko w jednym miejscu, 
+   ale powyższy sposób na tło całej strony jest częściej stosowany */
+
+        body {
+            background-color: #130f0a;
+            color: white;
+            padding: 20px;
+        }
+
+        .sample-card {
+           
+            background: #1e1e1e;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        button {
+            background: #1db954;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #e91e63; /* Wyrazisty róż/czerwony */
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+            .delete-btn:hover {
+                background: #c2185b;
+                transform: scale(1.05);
+            }
+
+        .upload-section {
+     
+            background: #252525;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px dashed #1db954;
+        }
+
+            .upload-section input {
+                display: block;
+                margin: 10px 0;
+                padding: 8px;
+                width: 100%;
+                max-width: 300px;
+                background: #333;
+                color: white;
+                border: 1px solid #444;
+            }
+    </style>
+</head>
+<body>
+    <video class="background-video" autoplay loop muted playsinline>
+        <source src="./assets/vid/moje_wideo.mp4" type="video/mp4" />
+    </video>
+    <img src="./assets/img/logo.png" alt="SixteenSounds Logo" class="header-logo">
+    <div class="upload-section">
+        <h2>Dodaj nowy sampel</h2>
+        <input type="text" id="newName" placeholder="Nazwa sampla">
+        <input type="text" id="newCategory" placeholder="Kategoria">
+        <input type="file" id="newFile" accept=".mp3,.wav,.ogg">
+        <button onclick="uploadSample()">Wyślij na serwer</button>
+    </div>
+    <div id="samples-list">Ładowanie sampli...</div>
+
+    <script>
+        async function loadSamples() {
+            try {
+                // 1. Pobieramy dane z Twojego API
+                const response = await fetch('/api/Sample');
+                const samples = await response.json();
+
+                const listElement = document.getElementById('samples-list');
+                listElement.innerHTML = ''; // Czyścimy napis "Ładowanie..."
+
+                // 2. Tworzymy kartę dla każdego sampla
+                samples.forEach(sample => {
+                    const card = document.createElement('div');
+                    card.className = 'sample-card';
+                    card.innerHTML = `
+                        <h3>${sample.name}</h3>
+                        <p>Kategoria: ${sample.category}</p>
+                        <audio controls>
+                            <source src="${encodeURI(sample.fileUrl)}" type="audio/mpeg">
+                            Twoja przeglądarka nie wspiera odtwarzacza.
+                        </audio>
+                    `;
+                    listElement.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Błąd ładowania:", error);
+                document.getElementById('samples-list').innerText = "Nie udało się załadować bitów.";
+            }
+        }
+
+        // Uruchom funkcję od razu po wczytaniu strony
+        async function loadSamples() {
+            try {
+                const response = await fetch('/api/Sample');
+                const samples = await response.json();
+
+                const listElement = document.getElementById('samples-list');
+                listElement.innerHTML = '';
+
+                samples.forEach(sample => {
+                    const card = document.createElement('div');
+                    card.className = 'sample-card';
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>${sample.name}</h3>
+                            <button class="delete-btn" onclick="deleteSample(${sample.id})">Usuń</button>
+                        </div>
+                        <p>Kategoria: ${sample.category}</p>
+                        <audio controls>
+                            <source src="${sample.fileUrl}" type="audio/mpeg">
+                        </audio>
+                    `;
+                    listElement.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Błąd ładowania:", error);
+            }
+        }
+
+        // NOWA FUNKCJA DO USUWANIA
+        async function deleteSample(id) {
+            if (!confirm("Czy na pewno chcesz usunąć ten sampel?")) return;
+
+            try {
+                const response = await fetch(`/api/Sample/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert("Sampel usunięty!");
+                    loadSamples(); // Odświeżamy listę po usunięciu
+                } else {
+                    alert("Błąd podczas usuwania.");
+                }
+            } catch (error) {
+                console.error("Błąd:", error);
+            }
+        }
+
+        loadSamples();
+
+        async function uploadSample() {
+            const name = document.getElementById('newName').value;
+            const category = document.getElementById('newCategory').value;
+            const fileInput = document.getElementById('newFile');
+
+            if (!fileInput.files[0] || !name || !category) {
+                alert("Wypełnij wszystkie pola i wybierz plik!");
+                return;
+            }
+
+            // FormData to specjalny obiekt, który pakuje plik i tekst w jedną paczkę
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('name', name);
+            formData.append('category', category);
+            formData.append('userId', 1); // Na razie na sztywno jako Ty
+
+            try {
+                const response = await fetch('/api/Sample/upload', {
+                    method: 'POST',
+                    body: formData // Nie ustawiamy nagłówka Content-Type, przeglądarka zrobi to sama!
+                });
+
+                if (response.ok) {
+                    alert("Wgrano pomyślnie!");
+                    // Czyścimy pola po wysyłce
+                    document.getElementById('newName').value = '';
+                    document.getElementById('newCategory').value = '';
+                    fileInput.value = '';
+
+                    loadSamples(); // Odświeżamy listę, żeby zobaczyć nowy bit!
+                } else {
+                    const error = await response.text();
+                    alert("Błąd: " + error);
+                }
+            } catch (err) {
+                console.error("Błąd wysyłki:", err);
+            }
+        }
+    </script>
+</body>
+</html>

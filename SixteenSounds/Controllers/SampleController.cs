@@ -7,17 +7,18 @@ using Microsoft.OpenApi.Models;
 
 namespace SixteenSounds.Controllers
 {
-    [Route("api/[controller]")]                                                                       //definicja adresu URL. [controller] automatycznie zamieni się na "Samples".
-    [ApiController]                                                                                   //Ta linijka włącza automatyczne funkcje API (np. walidację czy dane są poprawne)
-    public class SampleController : ControllerBase                                                    //dziedziczymy po ControllerBase, co daje nam dostęp do mettod typu Ok(), BadRequest() czy CreatedAtAction()
+    [Route("api/[controller]")] // Adres URL: api/Sample
+    [ApiController] // Automatyczna walidacja modeli
+    public class SampleController : ControllerBase
     {
-        private readonly SixteenSoundsDbContext _context;                                             //Prywatne pole które pozwala nam komunikować się z bazą danych.
+        private readonly SixteenSoundsDbContext _context;
 
-        public SampleController(SixteenSoundsDbContext context)                                      //Konstruktor - serwer wstrzykuje nam dostęp do bazy.
+        public SampleController(SixteenSoundsDbContext context)
         {
-            _context = context;                                                                       //Przypisujemy bazę do naszego pola, żeby móc jej używać w innych metodach
+            _context = context;
         }
 
+        // POBIERANIE LISTY SAMPLI
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Sample>>> GetSamples(string? category = null)
         {
@@ -30,10 +31,9 @@ namespace SixteenSounds.Controllers
 
             var samples = await query.ToListAsync();
 
-            // Tworzymy bazowy adres URL (np. http://localhost:5159)
+            // Dynamiczne tworzenie adresu URL (np. http://localhost:5159)
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-            // Dla każdego sampla "doklejamy" link do pliku
             foreach (var sample in samples)
             {
                 sample.FileUrl = $"{baseUrl}/samples/{sample.FileName}";
@@ -42,14 +42,14 @@ namespace SixteenSounds.Controllers
             return Ok(samples);
         }
 
-
+        // WGRYWANIE NOWEGO PLIKU
         [HttpPost("upload")]
-        [Consumes("multipart/form-data")] // Dodaj tę linię! Mówi Swaggerowi, że to formularz z plikiem
+        [Consumes("multipart/form-data")] // Wymagane dla Swaggera przy IFormFile
         public async Task<IActionResult> UploadSample(
-        IFormFile file,           // Usuń [FromForm] sprzed każdego z osobna
-        [FromForm] string name,
-        [FromForm] string category,
-        [FromForm] int userId)
+            IFormFile file,
+            [FromForm] string name,
+            [FromForm] string category,
+            [FromForm] int userId)
         {
             // 1. Walidacja formatu
             var allowedExtensions = new[] { ".mp3", ".wav", ".ogg" };
@@ -57,29 +57,34 @@ namespace SixteenSounds.Controllers
             if (!allowedExtensions.Contains(extension))
                 return BadRequest("Niedozwolony format pliku. Akceptujemy tylko .mp3, .wav, .ogg");
 
-            // 2. Walidacja rozmiaru (np. 15MB)
-            long maxFileSize = 15 * 1024 * 1024; // 15MB w bajtach
+            // 2. Walidacja rozmiaru (15MB)
+            long maxFileSize = 15 * 1024 * 1024;
             if (file.Length > maxFileSize)
                 return BadRequest("Plik jest za duży. Maksymalny rozmiar to 15MB.");
 
-            // 3. Czyszczenie nazwy pliku ze spacji i dziwnych znaków
-            // Zamieniamy spacje na '-' i bierzemy tylko bezpieczne znaki
-            string safeFileName = Path.GetFileNameWithoutExtension(file.FileName)
-                .Replace(" ", "-")
-                .Replace("@", "");
+            // 3. Czyszczenie nazwy pliku (Twoja nowa logika "Safe Name")
+            var rawFileName = Path.GetFileNameWithoutExtension(file.FileName);
+            var safeFileName = rawFileName
+                .Replace(" ", "-")  // Spacja -> Myślnik
+                .Replace("@", "")   // Usuń @
+                .Replace("#", "")   // Usuń #
+                .Replace(".", "-"); // Kropka wewnątrz nazwy -> Myślnik
 
+            // Ścieżka do folderu wwwroot/samples
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "samples");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
-            // Generujemy unikalną, ale czystszą nazwę
+            // Generujemy unikalną nazwę z GUID
             var uniqueFileName = $"{Guid.NewGuid()}_{safeFileName}{extension}";
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
+            // Zapis fizycznego pliku na dysku
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
 
+            // Zapis informacji do bazy danych
             var sample = new Sample
             {
                 Name = name,
@@ -95,6 +100,7 @@ namespace SixteenSounds.Controllers
             return Ok(new { message = "Sampel dodany pomyślnie!", fileName = uniqueFileName });
         }
 
+        // USUWANIE SAMPLA I PLIKU
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSample(int id)
         {
@@ -116,10 +122,5 @@ namespace SixteenSounds.Controllers
 
             return Ok(new { message = $"Sampel o ID {id} został usunięty z bazy i z dysku." });
         }
-
-
-
-
     }
-
 }
