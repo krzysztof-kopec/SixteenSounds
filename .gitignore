@@ -364,3 +364,8 @@ FodyWeavers.xsd
 
 # Ignore any music files
 wwwroot/samples/*
+
+# Ignore configuration files with sensitive data
+**/appsettings.json
+**/appsettings.Production.json
+/SixteenSounds/appsettings.json

@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\assets\img\logo.png" />
+    <Content Remove="wwwroot\assets\vid\moje_wideo.mp4" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -20,6 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\assets\img\" />
+    <Folder Include="wwwroot\assets\vid\" />
     <Folder Include="wwwroot\Samples\" />
   </ItemGroup>
 
