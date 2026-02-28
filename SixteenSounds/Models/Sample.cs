@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema; // Ważne: dodaj to na samej górze!
+﻿using System.ComponentModel.DataAnnotations.Schema; 
 
 namespace SixteenSounds.Models
 {
@@ -11,8 +11,12 @@ namespace SixteenSounds.Models
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // TEGO CI BRAKOWAŁO:
-        [NotMapped] // To mówi bazie danych: "Nie twórz dla mnie kolumny, potrzebuję tego pola tylko w kodzie"
+    
+        [NotMapped] 
         public string FileUrl { get; set; } = string.Empty;
+        public ICollection<Tag> Tags { get; set; } = new List<Tag>();
+
+        public string CreatedBy { get; set; } = "User1";
+        public bool IsPublic { get; set; } = true;
     }
 }

@@ -13,5 +13,7 @@ namespace SixteenSounds.Data
         // Tutaj definiujesz tabele, które pojawią się w bazie
         public DbSet<User> Users { get; set; }
         public DbSet<Sample> Samples { get; set; }
+
+        public DbSet<Tag> Tags { get; set; }
     }
 }

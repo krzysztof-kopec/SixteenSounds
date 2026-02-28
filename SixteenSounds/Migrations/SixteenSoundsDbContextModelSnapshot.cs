@@ -22,7 +22,7 @@ namespace SixteenSounds.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Sample", b =>
+            modelBuilder.Entity("SixteenSounds.Models.Sample", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
