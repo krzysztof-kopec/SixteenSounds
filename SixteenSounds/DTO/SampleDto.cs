@@ -2,8 +2,8 @@
 {
     public class SampleDto
     {
-        public string Name { get; set; }
-        public string Path { get; set; }
-        public List<string> TagNames { get; set; }
+        public string? Name { get; set; }
+        public string? Path { get; set; }
+        public List<string>? TagNames { get; set; }
     }
 }
