@@ -2,12 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using SixteenSounds.Data;
 using SixteenSounds.Models;
-using SixteenSounds.Controllers;
 
 namespace SixteenSounds.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController] //sprawdzamy bezpieczeństwo i poprawność danych
+    [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly SixteenSoundsDbContext _context;
@@ -17,17 +16,15 @@ namespace SixteenSounds.Controllers
             _context = context;
         }
 
-        //rejestracja
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterDto request)
         {
-            //sprawdzamy czy użytkownik o podanym emailu już istnieje
-            if(await _context.Users.AnySync(u => u.Email == request.Email))
+            // 1. Sprawdzamy czy istnieje (AnyAsync - poprawiona nazwa)
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
                 return BadRequest("Użytkownik o podanym emailu już istnieje.");
             }
 
-            //szyfrowanie hasla
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             var user = new User
@@ -38,18 +35,44 @@ namespace SixteenSounds.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
+            // 2. Dodajemy i KONIECZNIE zapisujemy zmiany
             _context.Users.Add(user);
-            await Ok("Konto stworzone pomyślnie.");
+            await _context.SaveChangesAsync();
 
+            return Ok("Konto stworzone pomyślnie.");
         }
 
-        //Logowanie
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDto request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-        }
 
+            if (user == null)
+            {
+                return BadRequest("Nie znaleziono użytkownika.");
+            }
+
+            // 3. Weryfikacja (poprawione nawiasy)
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            {
+                return BadRequest("Niepoprawne hasło.");
+            }
+
+            return Ok($"Witaj {user.Username}! Logowanie udane!");
+        }
+    }
+
+    // DTOs zostają bez zmian, są poprawne
+    public class UserRegisterDto
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class UserLoginDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }
-
